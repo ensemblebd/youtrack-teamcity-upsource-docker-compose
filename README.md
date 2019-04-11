@@ -21,3 +21,4 @@ IN PROGRESS:
 
 TODO:
 * Implement manual Dockerfile git clone of Teamcity-server repo, to allow for provisioning customized services on install per docs.
+* add sample addon compose/docker files to provision additional agents (nano win, or extended toolset variation)
