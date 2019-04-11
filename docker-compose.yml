@@ -2,7 +2,7 @@ version: '3'
 services:
 
   hub:
-    container_name: hub
+    container_name: ${JB_PREFIX}hub
     image: jetbrains/hub:${JB_HUB_VERSION}
     networks:
       - ${JB_NETWORK}
@@ -17,7 +17,7 @@ services:
     restart: always
 
   youtrack:
-    container_name: youtrack
+    container_name: ${JB_PREFIX}youtrack
     image: jetbrains/youtrack:${JB_YOUTRACK_VERSION}
     networks:
       - ${JB_NETWORK}
@@ -35,7 +35,7 @@ services:
       - hub
 
   upsource:
-    container_name: upsource
+    container_name: ${JB_PREFIX}upsource
     image: jetbrains/upsource:${JB_UPSOURCE_VERSION}
     networks:
       - ${JB_NETWORK}
@@ -54,7 +54,7 @@ services:
       - hub
 
   teamcity:
-    container_name: teamcity
+    container_name: ${JB_PREFIX}teamcity
     image: jetbrains/teamcity-server
     networks:
       - ${JB_NETWORK}
@@ -62,7 +62,6 @@ services:
       - ${JB_TEAMCITY_PORT}:8111
     volumes:
       - ./teamcity/data:/data/teamcity_server/datadir:rw
-      - ./teamcity/conf:/opt/teamcity/conf:rw
       - ./teamcity/logs:/opt/teamcity/logs:rw
     restart: always
     links:
@@ -82,7 +81,7 @@ services:
       - teamcity
 
   tcpostgres:
-    container_name: tcpostgres
+    container_name: ${JB_PREFIX}tcpostgres
     image: postgres:${JB_POSTGRES_VERSION}
     build:
       context: .
