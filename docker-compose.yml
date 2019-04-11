@@ -1,125 +1,99 @@
-version: '2.1'
+version: '3'
 services:
 
   hub:
     container_name: hub
-    image: pojo-hub:latest
-    build:
-      context: .
-      dockerfile: Dockerfile-hub
+    image: jetbrains/hub:${JB_HUB_VERSION}
+    networks:
+      - ${JB_NETWORK}
     ports:
-      - 8083:8080
+      - ${JB_HUB_PORT}:8080
     volumes:
-      - ./hub/backups:/hub/backups:rw
-      - ./hub/data:/hub/data:rw
-      - ./hub/logs:/hub/logs:rw
-      - ./hub/conf:/hub/conf:rw
-      - ./hub/temp:/hub/temp:rw
+      - ./hub/backups:/opt/hub/backups:rw
+      - ./hub/data:/opt/hub/data:rw
+      - ./hub/logs:/opt/hub/logs:rw
+      - ./hub/conf:/opt/hub/conf:rw
+      - ./hub/temp:/opt/hub/temp:rw
     restart: always
-    cpu_shares: 75
-    mem_limit: 1g
-    memswap_limit: 2g
 
   youtrack:
     container_name: youtrack
-    image: pojo-youtrack:latest
-    build:
-      context: .
-      dockerfile: Dockerfile-youtrack
+    image: jetbrains/youtrack:${JB_YOUTRACK_VERSION}
+    networks:
+      - ${JB_NETWORK}
     ports:
-      - 8080:8080
+      - ${JB_YOUTRACK_PORT}:8080
     volumes:
-      - ./youtrack/backups:/youtrack/backups:rw
-      - ./youtrack/data:/youtrack/data:rw
-      - ./youtrack/logs:/youtrack/logs:rw
-      - ./youtrack/conf:/youtrack/conf:rw
-      - ./youtrack/temp:/youtrack/temp:rw
+      - ./youtrack/backups:/opt/youtrack/backups:rw
+      - ./youtrack/data:/opt/youtrack/data:rw
+      - ./youtrack/logs:/opt/youtrack/logs:rw
+      - ./youtrack/conf:/opt/youtrack/conf:rw
+      - ./youtrack/temp:/opt/youtrack/temp:rw
     restart: always
     links:
       - teamcity
       - hub
-    cpu_shares: 75
-    mem_limit: 1g
-    memswap_limit: 2g
 
   upsource:
     container_name: upsource
-    image: pojo-upsource:latest
-    build:
-      context: .
-      dockerfile: Dockerfile-upsource
+    image: jetbrains/upsource:${JB_UPSOURCE_VERSION}
+    networks:
+      - ${JB_NETWORK}
     ports:
-      - 8082:8080
+      - ${JB_UPSOURCE_PORT}:8080
     volumes:
-      - ./upsource/backups:/upsource/backups:rw
-      - ./upsource/data:/upsource/data:rw
-      - ./upsource/logs:/upsource/logs:rw
-      - ./upsource/conf:/upsource/conf:rw
-      - ./upsource/temp:/upsource/temp:rw
+      - ./upsource/backups:/opt/upsource/backups:rw
+      - ./upsource/data:/opt/upsource/data:rw
+      - ./upsource/logs:/opt/upsource/logs:rw
+      - ./upsource/conf:/opt/upsource/conf:rw
+      - ./upsource/temp:/opt/upsource/temp:rw
     restart: always
     links:
       - youtrack
       - teamcity
       - hub
-    cpu_shares: 50
-    mem_limit: 4g
-    memswap_limit: 8g
 
   teamcity:
     container_name: teamcity
-    image: pojo-teamcity:latest
-    build:
-      context: .
-      dockerfile: Dockerfile-teamcity
+    image: jetbrains/teamcity-server
+    networks:
+      - ${JB_NETWORK}
     ports:
-      - 8081:8111
+      - ${JB_TEAMCITY_PORT}:8111
     volumes:
-      - ./teamcity/plugins:/teamcity/plugins:rw
-      - ./teamcity/conf:/teamcity/conf:rw
-      - ./teamcity/logs:/teamcity/logs:rw
+      - ./teamcity/data:/data/teamcity_server/datadir:rw
+      - ./teamcity/conf:/opt/teamcity/conf:rw
+      - ./teamcity/logs:/opt/teamcity/logs:rw
     restart: always
     links:
       - postgres
       - hub
-    cpu_shares: 75
-    mem_limit: 1g
-    memswap_limit: 2g
 
   teamcity-agent:
-    image: jetbrains/teamcity-agent:latest
+    image: jetbrains/teamcity-agent:${JB_AGENT_VERSION}
+    networks:
+      - ${JB_NETWORK}
     environment:
       - "SERVER_URL=teamcity:8111"
+    volumes: 
+      - ./teamcity-agent/conf:/data/teamcity_agent/conf:rw
     restart: always
     links:
       - teamcity
-    cpu_shares: 75
-    mem_limit: 1g
-    memswap_limit: 2g
 
   postgres:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:${JB_POSTGRES_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile-postgres
+    networks:
+      - ${JB_NETWORK}
     ports:
-      - 5432:5432
+      - ${JB_POSTGRES_PORT}:5432
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - ./postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD: ${JB_POSTGRES_ROOT_PASSWORD}
     restart: always
-    cpu_shares: 75
-    mem_limit: 512m
-    memswap_limit: 1g
-
-#  nginx:
-#    container_name: nginx
-#    image: nginx
-#    volumes:
-#      - ./nginx:/etc/nginx
-#    environment:
-#      - NGINX_PORT=80
-#    ports:
-#      - 80:80
-#    links:
-#      - hub
-#      - youtrack
-#      - upsource
-#      - teamcity
-#    restart: always
+ 
