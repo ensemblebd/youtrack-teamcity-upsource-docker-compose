@@ -1,7 +1,7 @@
 FROM openjdk:latest
 MAINTAINER Piotr Joński <p.jonski@pojo.pl>
 
-ARG HUB_VERSION=2017.1.4205
+ARG HUB_VERSION=2018.4.11214
 ARG USER_ID=2000
 ARG USER_NAME=jetbrains
 ARG BASE_URL=http://localhost/
@@ -15,10 +15,10 @@ USER ${USER_NAME}
 WORKDIR /hub
 
 RUN mkdir backups data logs conf temp && \
-    curl --location "https://download.jetbrains.com/hub/2017.1/hub-ring-bundle-${HUB_VERSION}.zip" > hub.zip && \
+    curl --location "https://download-cf.jetbrains.com/hub/hub-${HUB_VERSION}.zip" > hub.zip && \
     unzip -q hub.zip && \
     rm -f hub.zip && \
-    mv hub-ring-bundle-${HUB_VERSION}/* . && \
+    mv hub-${HUB_VERSION}/* . && \
     rm -rf hub-ring-bundle-${HUB_VERSION} && \
     rm -rf internal/java/linux-x64/man && \
     rm -rf internal/java/mac-x64 && \
