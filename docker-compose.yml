@@ -1,11 +1,30 @@
 version: '3'
 services:
+  
+  nginx:
+    container_name: ${JB_PREFIX}nginx
+    image: nginx
+    volumes:
+      - ./nginx:/etc/nginx
+    environment:
+      - NGINX_PORT=443
+    networks:
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.2
+    ports:
+      - ${JB_NGINX_PORT}:443
+    restart: always
 
   hub:
     container_name: ${JB_PREFIX}hub
     image: jetbrains/hub:${JB_HUB_VERSION}
+    extra_hosts: 
+      - "${JB_HOSTNAME_upsource}:${JB_SUBNET}.2"
+      - "${JB_HOSTNAME_youtrack}:${JB_SUBNET}.2"
+      - "${JB_HOSTNAME_teamcity}:${JB_SUBNET}.2"
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.4
     ports:
       - ${JB_HUB_PORT}:8080
     volumes:
@@ -15,12 +34,17 @@ services:
       - ./hub/conf:/opt/hub/conf:rw
       - ./hub/temp:/opt/hub/temp:rw
     restart: always
+    links:
+      - nginx
 
   youtrack:
     container_name: ${JB_PREFIX}youtrack
     image: jetbrains/youtrack:${JB_YOUTRACK_VERSION}
+    extra_hosts:
+      - "${JB_HOSTNAME_hub}:${JB_SUBNET}.2"
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.5
     ports:
       - ${JB_YOUTRACK_PORT}:8080
     volumes:
@@ -37,8 +61,11 @@ services:
   upsource:
     container_name: ${JB_PREFIX}upsource
     image: jetbrains/upsource:${JB_UPSOURCE_VERSION}
+    extra_hosts:
+      - "${JB_HOSTNAME_hub}:${JB_SUBNET}.2"
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.6
     ports:
       - ${JB_UPSOURCE_PORT}:8080
     volumes:
@@ -56,13 +83,17 @@ services:
   teamcity:
     container_name: ${JB_PREFIX}teamcity
     image: jetbrains/teamcity-server
+    extra_hosts:
+      - "${JB_HOSTNAME_hub}:${JB_SUBNET}.2"
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.7
     ports:
       - ${JB_TEAMCITY_PORT}:8111
     volumes:
       - ./teamcity/data:/data/teamcity_server/datadir:rw
       - ./teamcity/logs:/opt/teamcity/logs:rw
+      - ./teamcity/conf:/opt/teamcity/conf:rw
     restart: always
     links:
       - tcpostgres
@@ -71,7 +102,8 @@ services:
   teamcity-agent:
     image: jetbrains/teamcity-agent:${JB_AGENT_VERSION}
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.8
     environment:
       - "SERVER_URL=teamcity:8111"
     volumes: 
@@ -87,7 +119,8 @@ services:
       context: .
       dockerfile: Dockerfile-postgres
     networks:
-      - ${JB_NETWORK}
+      SED_JB_NETWORK:
+        ipv4_address: ${JB_SUBNET}.3
     ports:
       - ${JB_POSTGRES_PORT}:5432
     volumes:
@@ -95,9 +128,12 @@ services:
     environment:
       - "POSTGRES_PASSWORD=${JB_POSTGRES_ROOT_PASSWORD}"
     restart: always
+    links:
+      - nginx
 
 networks:
-  NET_TODO_RENAMEME:
-    name: ${JB_NETWORK}
+  SED_JB_NETWORK:
     driver: bridge
-
+    ipam:
+      config:
+        - subnet: ${JB_SUBNET}.0/24
